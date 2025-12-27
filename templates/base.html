@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Китобҳои дарсӣ — Душанбе</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+        }
+
+        /* Sidebar */
+        aside.sidebar {
+            width: 240px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #3498db;
+        }
+
+        .sidebar-header p {
+            font-size: 0.95rem;
+            color: #bdc3c7;
+            margin-top: 4px;
+        }
+
+        .nav-section {
+            padding: 15px 20px;
+        }
+
+        .nav-section h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #ecf0f1;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            background-color: #34495e;
+            color: #3498db;
+        }
+
+        .nav-menu i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .user-section {
+            margin-top: auto;
+            padding: 15px 20px;
+            border-top: 1px solid #34495e;
+        }
+
+        .user-section .user-info {
+            margin-bottom: 12px;
+        }
+
+        .user-section .user-info h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .user-section .user-info p {
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 240px;
+            padding: 24px;
+            width: calc(100% - 240px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            aside.sidebar {
+                width: 70px;
+                padding: 15px 0;
+            }
+            .sidebar-header h1,
+            .sidebar-header p,
+            .nav-section h2,
+            .nav-menu a span,
+            .user-info h3,
+            .user-info p {
+                display: none;
+            }
+            .nav-menu a {
+                justify-content: center;
+                padding: 14px 0;
+            }
+            .nav-menu i {
+                font-size: 1.3rem;
+            }
+            main {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>Китобҳои дарсӣ</h1>
+            <p>Душанбе</p>
+        </div>
+
+        <div class="nav-section">
+            <h2>Панель управления</h2>
+            <nav class="nav-menu">
+                <a href="{% url 'schools' %}">
+                    <i class="fas fa-school"></i>
+                    <span>Школы</span>
+                </a>
+                <a href="{% url 'controlB' %}">
+                    <i class="fas fa-book"></i>
+                    <span>Управление книгами</span>
+                </a>
+                <a href="{% url 'BookIssiue' %}">
+                    <i class="fas fa-hand-holding"></i>
+                    <span>Выдача книг</span>
+                </a>
+                <a href="{% url 'users' %}">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="user-section">
+            <div class="user-info">
+                <h3>Фарход Саломов</h3>
+                <p>Администратор</p>
+            </div>
+            <nav class="nav-menu">
+                <a>
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </a>
+                <a>
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Выйти</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <main>
+        {% block content %}
+        
+        {% endblock content %}
+    </main>
+
+</body>
+</html>

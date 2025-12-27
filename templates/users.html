@@ -1,0 +1,757 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<style>
+  /* Общие стили модальных окон */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: none;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: modalFadeIn 0.3s;
+    cursor: pointer;
+  }
+
+  .modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 520px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin: 5% auto;
+    padding: 28px;
+    z-index: 2001;
+    animation: modalSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* Заголовки */
+  .modal-content h2 {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Удаление — красный заголовок */
+  #deleteUserModal .modal-content h2 {
+    color: #e74c3c;
+  }
+
+  /* Форма */
+  .modal-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .modal-content label {
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+
+  .modal-content input:focus,
+  .modal-content select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+
+  /* Кнопки */
+  .modal-content form>div:last-child,
+  .modal-content form .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .modal-content button[type="submit"],
+  .modal-content button[type="button"] {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  /* Кнопка "Добавить" / "Сохранить" — синяя */
+  .modal-content button[type="submit"] {
+    background: #3498db;
+    color: white;
+  }
+
+  .modal-content button[type="submit"]:hover {
+    background: #2980b9;
+  }
+
+  /* Кнопка "Удалить" — красная (для deleteUserModal) */
+  #deleteUserModal button[type="submit"] {
+    background: #e74c3c;
+    color: white;
+  }
+
+  #deleteUserModal button[type="submit"]:hover {
+    background: #c0392b;
+  }
+
+  /* Кнопка "Отмена" — серая */
+  .modal-content button[type="button"] {
+    background: #ecf0f1;
+    color: #7f8c8d;
+  }
+
+  .modal-content button[type="button"]:hover {
+    background: #d5dbdb;
+  }
+
+  /* Текст подтверждения удаления */
+  #deleteUserModal .modal-content p {
+    color: #555;
+    font-size: 1.05rem;
+    margin-bottom: 24px;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Анимации */
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Адаптивность */
+  @media (max-width: 600px) {
+    .modal-content {
+      width: 95%;
+      padding: 24px 20px;
+      margin: 12% auto;
+    }
+
+    .modal-content form>div:last-child,
+    .modal-content form .button-group {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .modal-content button {
+      width: 100%;
+    }
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+  }
+
+  .header p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+
+  .btn-add {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-add:hover {
+    background: #1a252f;
+  }
+
+  /* Роли */
+  .roles-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .role-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .role-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .role-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+  }
+
+  .role-admin {
+    background: #3498db;
+  }
+
+  .role-director {
+    background: #27ae60;
+  }
+
+  .role-librarian {
+    background: #9b59b6;
+  }
+
+  .role-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .role-permissions {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .role-permissions li {
+    margin: 4px 0;
+    list-style-type: none;
+    position: relative;
+    padding-left: 16px;
+  }
+
+  .role-permissions li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #7f8c8d;
+  }
+
+  /* Поиск */
+  .search-filter {
+    background: white;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+
+  .search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+
+  /* Таблица пользователей */
+  .users-table-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-header h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+  }
+
+  .table-header p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .users-table th {
+    text-align: left;
+    padding: 12px 20px;
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+  }
+
+  .users-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+  }
+
+  .user-name {
+    font-weight: 600;
+  }
+
+  .user-email {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-left: 8px;
+  }
+
+  .user-role {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+  }
+
+  .role-admin-badge {
+    background: #3498db;
+  }
+
+  .role-director-badge {
+    background: #27ae60;
+  }
+
+  .role-librarian-badge {
+    background: #9b59b6;
+  }
+
+  .user-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-active {
+    background: #2ecc71;
+    color: white;
+  }
+
+  .status-inactive {
+    background: #e74c3c;
+    color: white;
+  }
+
+  .edit-btn {
+    background: #f8f9fa;
+    color: #555;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+
+  .edit-btn:hover {
+    background: #e9ecef;
+  }
+
+  /* Статистика */
+  .stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 8px 0;
+  }
+
+  .stat-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+
+  /* Адаптивность */
+  @media (max-width: 768px) {
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .search-filter {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .users-table th,
+    .users-table td {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .user-info {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .user-email {
+      margin-left: 0;
+      margin-top: 4px;
+    }
+
+    .user-role,
+    .user-status {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
+  }
+</style>
+
+<div class="header">
+  <div>
+    <h1>Управление пользователями</h1>
+    <p>Роли и права доступа в системе</p>
+  </div>
+  <button onclick="openAddModal()" class="btn-add"><i class="fas fa-plus"></i> Добавить пользователя</button>
+</div>
+
+<div class="roles-section">
+  <div class="role-card">
+    <div class="role-header">
+      <div class="role-icon role-admin"><i class="fas fa-user-shield"></i></div>
+      <div class="role-title">Администратор</div>
+    </div>
+    <div class="role-permissions">
+      <ul>
+        <li>Полный доступ ко всем функциям системы</li>
+        <li>Управление школами</li>
+        <li>Управление книгами</li>
+        <li>Управление пользователями</li>
+        <li>Просмотр всей статистики</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card">
+    <div class="role-header">
+      <div class="role-icon role-director"><i class="fas fa-school"></i></div>
+      <div class="role-title">Директор школы</div>
+    </div>
+    <div class="role-permissions">
+      <ul>
+        <li>Доступ только к своей школе</li>
+        <li>Просмотр своей школы</li>
+        <li>Просмотр книг школы</li>
+        <li>Просмотр статистики</li>
+        <li>Выдача и возврат книг</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-card">
+    <div class="role-header">
+      <div class="role-icon role-librarian"><i class="fas fa-book-open"></i></div>
+      <div class="role-title">Библиотекарь</div>
+    </div>
+    <div class="role-permissions">
+      <ul>
+        <li>Работа с книгами своей школы</li>
+        <li>Выдача книг ученикам</li>
+        <li>Возврат книг</li>
+        <li>Отметка повреждений</li>
+        <li>Просмотр наличия</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="search-filter">
+<form method="get" class="search-filter">
+    <div class="search-box">
+        <input type="text" name="name" placeholder="Поиск по имени..." value="{{ name_query }}">
+    </div>
+    <select name="role" class="filter-select">
+        <option value="">Все роли</option>
+        {% for r in roles %}
+            <option value="{{ r }}" {% if role_query == r %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn-add">Применить</button>
+    <a href="{% url 'users' %}"><button class="btn-add" type="button">Сброс</button></a>
+</form>
+  </select>
+</div>
+
+<div class="users-table-container">
+  <div class="table-header">
+    <h3>Пользователи (6)</h3>
+    <p>Все зарегистрированные пользователи системы</p>
+  </div>
+
+  <table class="users-table">
+    <thead>
+      <tr>
+        <th>Пользователь</th>
+        <th>Email</th>
+        <th>Телефон</th>
+        <th>Роль</th>
+        <th>Школа</th>
+        <th>Статус</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="usersTableBody">
+      {% for user in users %}
+      <tr>
+        <td>
+          <div class="user-info">
+            <div class="user-avatar">{{ user.username|slice:":1" }}</div>
+            <div class="user-name">{{ user.username }}</div>
+          </div>
+        </td>
+        <td><i class="far fa-envelope"></i> Mbuhoreiv55@gmail.com</td>
+        <td><i class="fas fa-phone"></i> {{user.userrole.linked_school.contact}}</td>
+        <td>
+          <span class="user-role 
+          {% if user.userrole.role == 'admin' %}role-admin-badge{% endif %}
+          {% if user.userrole.role == 'director' %}role-director-badge{% endif %}
+          {% if user.userrole.role == 'librarian' %}role-librarian-badge{% endif %}
+        ">
+            {% if user.userrole.role == 'admin' %}Администратор{% endif %}
+            {% if user.userrole.role == 'director' %}Директор школы{% endif %}
+            {% if user.userrole.role == 'librarian' %}Библиотекарь{% endif %}
+          </span>
+        </td>
+        <td>{{ user.userrole.linked_school }}</td>
+        <td>
+          <span
+          style="background: greenyellow; padding: 10px; color: white; border-radius: 100%;"
+           >
+            Активен
+          </span>
+        </td>
+        <td>
+          <button class="edit-btn" onclick="openDeleteModal('{{ user.id }}', '{{ user.username }}')">
+            Удалить
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+
+  </table>
+</div>
+
+<div class="stats-section">
+  <div class="stat-card">
+    <div class="stat-number">6</div>
+    <div class="stat-label">всего пользователей<br>в системе</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">1</div>
+    <div class="stat-label">администраторов</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">3</div>
+    <div class="stat-label">директоров</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">2</div>
+    <div class="stat-label">библиотекарей</div>
+  </div>
+</div>
+
+
+<div id="addModal" class="modal" style="display:none;">
+  <div class="modal-overlay" onclick="closeAddModal()"></div>
+  <div class="modal-content">
+    <h2>Добавить пользователя</h2>
+    <form method="post" action="{% url 'add_user' %}">
+      {% csrf_token %}
+      <label>Имя пользователя:</label>
+      <input type="text" name="username" required>
+
+      <label>Роль:</label>
+      <select name="role">
+        <option value="admin">Администратор</option>
+        <option value="director">Директор школы</option>
+        <option value="librarian">Библиотекарь</option>
+      </select>
+
+      <label>Школа:</label>
+      <select name="school" required>
+        {% for school in schools %}
+        <option value="{{ school.id }}">{{ school.name }}</option>
+        {% endfor %}
+      </select>
+
+      <div style="margin-top:10px;">
+        <button type="submit">Добавить</button>
+        <button type="button" onclick="closeAddModal()">Отмена</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<article id="deleteUserModal" class="modal" style="display:none;">
+  <div class="modal-overlay" onclick="closeDeleteModal()"></div>
+  <div class="modal-content">
+    <h2 style="color:#e74c3c;">Удалить пользователя?</h2>
+    <p id="deleteUserText"></p>
+
+    <form method="post" action="{% url 'delete_user' %}">
+      {% csrf_token %}
+      <input type="hidden" name="user_id" id="delete_user_id">
+
+      <button type="submit" style="background:#e74c3c;color:white;padding:8px 16px;border:none;border-radius:6px;">
+        Да, удалить
+      </button>
+
+      <button type="button" onclick="closeDeleteModal()" style="margin-left:10px;">
+        Отмена
+      </button>
+    </form>
+  </div>
+</article>
+
+
+<script>
+  function openAddModal() {
+    document.getElementById('addModal').style.display = 'flex';
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
+  }
+
+  function openDeleteModal(id, username) {
+    document.getElementById('deleteUserModal').style.display = 'flex';
+    document.getElementById('delete_user_id').value = id;
+    document.getElementById('deleteUserText').innerText = `Вы действительно хотите удалить пользователя "${username}"?`;
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteUserModal').style.display = 'none';
+  }
+</script>
+
+{% endblock content %}
