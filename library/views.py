@@ -1,8 +1,8 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.contrib.auth.models import User
-from django.contrib.auth import login,authenticate
+from django.contrib.auth import login,authenticate,logout
 from .models import UserRole,School,SchoolBook,BookStock,Student,BookIssue, Book
-
+from .decorators import role_required
 
 def register_view(request):
     if request.method=='GET':
@@ -30,22 +30,30 @@ def login_view(request):
        user=authenticate(request,username=username,password=password)
        if user:
         login(request,user)
-        return redirect('schools')
+        return redirect_by_role(user)
+    return render(request, 'login.html', {
+            'error': 'Неверный логин или пароль'
+        })
+
+def logout_view(request):
+    if request.method=='POST':
+     logout(request)
+     return redirect('login')
 
 
 def redirect_by_role(user):
     role = user.userrole.role
 
     if role == 'admin':
-        return redirect('admin_dashboard')
+        return redirect('schools')
 
     if role == 'director':
-        return redirect('director_dashboard')
+        return redirect('BookIssiue')
 
     if role == 'librarian':
-        return redirect('librarian_dashboard')
+        return redirect('controlB')
     
-
+@role_required(['librarian'])
 def control_book(request):
     books=Book.objects.all()
 
@@ -80,7 +88,7 @@ def control_book(request):
         'subjects': subjects,
         'grades': grades,})
 
-
+@role_required(['admin'])
 def schools_view(request):
     name_query = request.GET.get('name', '')
     school=School.objects.all()
@@ -102,7 +110,7 @@ def schools_view(request):
             return redirect('schools')
     return render(request,'school.html',context={'school':school,'name_query': name_query,})
 
-
+@role_required(['director', 'librarian'])
 def BookIssiue(request):
    books1=SchoolBook.objects.all()
    school=School.objects.all()
@@ -157,10 +165,11 @@ def delete_book(request):
         Book.objects.filter(id=request.POST['book_id']).delete()
     return redirect('controlB')
 
+
+@role_required(['admin'])
 def users_view(request):
     users = User.objects.all().select_related('userrole') 
     roles = UserRole.objects.values_list('role', flat=True).distinct()
-    
     name_query = request.GET.get('name', '')
     role_query = request.GET.get('role', '')
     
@@ -183,9 +192,10 @@ def users_view(request):
 def add_user(request):
     if request.method == "POST":
         username = request.POST.get("username")
+        password = request.POST.get("password")
         role = request.POST.get("role")
         school_id = request.POST.get("school")
-        user = User.objects.create(username=username)
+        user = User.objects.create_user(username=username,password=password)
         school = get_object_or_404(School, id=school_id)
         UserRole.objects.create(
             user=user,
@@ -196,9 +206,15 @@ def add_user(request):
     return redirect('users')
 
 
+
 def delete_user(request):
     if request.method == "POST":
         user_id = request.POST.get("user_id")
         user = get_object_or_404(User, id=user_id)
         user.delete()  
     return redirect('users')
+
+
+
+def no_access(request):
+    return render(request, 'no_access.html')

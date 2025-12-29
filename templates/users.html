@@ -103,7 +103,6 @@
     transition: background 0.2s, transform 0.15s;
   }
 
-  /* Кнопка "Добавить" / "Сохранить" — синяя */
   .modal-content button[type="submit"] {
     background: #3498db;
     color: white;
@@ -689,6 +688,8 @@
       {% csrf_token %}
       <label>Имя пользователя:</label>
       <input type="text" name="username" required>
+      <label>Пароль:</label>
+      <input type="text" name="password" required>
 
       <label>Роль:</label>
       <select name="role">

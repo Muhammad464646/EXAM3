@@ -6,6 +6,7 @@ urlpatterns = [
     path('', register_view, name='register'),
     path('login/', login_view, name='login'),
     path('schools/', schools_view, name='schools'),
+    path('logout/', logout_view, name='logout'),
     path('users/', users_view, name='users'),
     path('users/add/', add_user, name='add_user'),
     path('users/delete/', delete_user, name='delete_user'),
@@ -13,4 +14,5 @@ urlpatterns = [
     path('BookIssue/',BookIssiue, name='BookIssiue'),
     path('control_book/edit/', edit_book, name='edit_book'),
     path('control_book/delete/', delete_book, name='delete_book'),
+    path('no-access/', no_access, name='no_access'),
 ]
