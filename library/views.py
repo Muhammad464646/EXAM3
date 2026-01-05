@@ -4,22 +4,6 @@ from django.contrib.auth import login,authenticate,logout
 from .models import UserRole,School,SchoolBook,BookStock,Student,BookIssue, Book
 from .decorators import role_required
 
-def register_view(request):
-    if request.method=='GET':
-     return render(request,'register.html')
-    elif request.method=='POST':
-       username=request.POST.get('username')
-       password=request.POST.get('password')
-
-       user=User.objects.create_user(username=username,password=password)
-       
-       UserRole.objects.create(
-          user=user,
-          role='director'
-       )
-       return redirect('login')
-    
-
 def login_view(request):
     if request.method=='GET':
      return render(request,'login.html')
@@ -38,7 +22,7 @@ def login_view(request):
 def logout_view(request):
     if request.method=='POST':
      logout(request)
-     return redirect('login')
+     return redirect('')
 
 
 def redirect_by_role(user):
@@ -111,40 +95,49 @@ def schools_view(request):
     return render(request,'school.html',context={'school':school,'name_query': name_query,})
 
 @role_required(['director', 'librarian'])
-def BookIssiue(request):
-   books1=SchoolBook.objects.all()
-   school=School.objects.all()
-   books=Book.objects.all()
-   student=Student.objects.all()
-   
-   if request.method == 'POST':
+def BookIssiuе(request):
+    schools = School.objects.all()
+    selected_school_id = request.GET.get('school_id')
+
+    students = Student.objects.none()   # пустой QuerySet по умолчанию
+    books1 = SchoolBook.objects.none()  # пустой QuerySet по умолчанию
+
+    if selected_school_id:
+        students = Student.objects.filter(school_id=selected_school_id)
+        books1 = SchoolBook.objects.filter(school_id=selected_school_id)
+
+    if request.method == 'POST':
         school_id = request.POST.get('school_id')
         student_id = request.POST.get('student_id')
         book_id = request.POST.get('book_id')
         quantity = int(request.POST.get('quantity'))
         issue_date = request.POST.get('issue_date')
         return_date = request.POST.get('return_date')
-        print(request.POST)
-        print('book_id:', book_id) 
-        print('student:', student_id) 
-        print('school:', school_id) 
+
         school = get_object_or_404(School, id=school_id)
         student = get_object_or_404(Student, id=student_id)
-        book = get_object_or_404(Book, id=book_id)   
-        school_book = get_object_or_404(SchoolBook, school=school, book=book)        
+        school_book = get_object_or_404(SchoolBook, school=school, book_id=book_id)
+
         BookIssue.objects.create(
-                student=student,
-                school=school,
-                book=book,
-                issue_date=issue_date,
-                return_date=return_date,
-                status='issued'
-            )
+            student=student,
+            school=school,
+            book=school_book.book,
+            issue_date=issue_date,
+            return_date=return_date,
+            status='issued'
+        )
         school_book.quantity -= quantity
         school_book.save()
 
         return redirect('BookIssiue')
-   return render(request,'BookIssue.html',context={'school':school,'books':books,'student':student,'books1':books1})
+
+    return render(request, 'BookIssue.html', {
+        'schools': schools,
+        'selected_school_id': int(selected_school_id) if selected_school_id else None,
+        'students': students,
+        'books1': books1
+    })
+
 
 
 def edit_book(request):

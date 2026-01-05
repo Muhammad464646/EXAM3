@@ -23,11 +23,12 @@
     font-size: 1rem;
   }
 
-  .form-section, .inventory-section {
+  .form-section,
+  .inventory-section {
     background: white;
     padding: 24px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     margin-bottom: 32px;
   }
 
@@ -132,85 +133,81 @@
 </style>
 
 <div class="issue-container">
-  <div class="page-header">
-    <h1><i class="fas fa-hand-holding"></i> Выдача книг ученикам</h1>
-    <p>Оформление выдачи учебников</p>
-  </div>
+  <h2>Выдача книги</h2>
 
-  <section class="form-section">
-    <h2><i class="fas fa-file-alt"></i> Форма выдачи</h2>
-    <p>Заполните данные для выдачи учебника</p>
+  <!-- GET форма для выбора школы -->
+  <form method="get">
+    <label>Выберите школу:</label>
+    <select name="school_id" onchange="this.form.submit()">
+      <option value="">— Выберите школу —</option>
+      {% for s in schools %}
+        <option value="{{ s.id }}" {% if s.id == selected_school_id %}selected{% endif %}>
+          {{ s.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </form>
 
-    <form method="POST">
-      {% csrf_token %}
+  {% if selected_school_id %}
+  <!-- POST форма для выдачи книги -->
+  <form method="POST" class="form-section">
+    {% csrf_token %}
+    <input type="hidden" name="school_id" value="{{ selected_school_id }}">
 
+    <div class="form-group">
+      <label>Ученик:</label>
+      <select name="student_id" required>
+        <option value="">— Выберите ученика —</option>
+        {% for student in students %}
+          <option value="{{ student.id }}">{{ student.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Книга:</label>
+      <select name="book_id" required>
+        <option value="">— Выберите книгу —</option>
+        {% for sb in books1 %}
+          <option value="{{ sb.book.id }}">
+            {{ sb.book.subject }} — {{ sb.book.grade }} (в наличии: {{ sb.quantity }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Количество:</label>
+      <input type="number" name="quantity" min="1" value="1" required>
+    </div>
+
+    <div class="date-group">
       <div class="form-group">
-        <label for="book-select"><i class="fas fa-book"></i> Книга</label>
-        <select id="book-select" name="book_id" required>
-          <option value="">— Выберите учебник —</option>
-          {% for item in books1 %}
-            <option value="{{ item.book.id }}">{{ item.book.subject }}({{ item.book.grade }} класс) -- в наличии {{item.quantity}}</option>
-          {% endfor %}
-        </select>
+        <label>Дата выдачи:</label>
+        <input type="datetime-local" name="issue_date" required>
       </div>
-
       <div class="form-group">
-        <label for="school-select"><i class="fas fa-school"></i> Школа</label>
-        <select id="school-select" name="school_id" required>
-          <option value="">— Выберите школу —</option>
-          {% for item in school %}
-            <option value="{{ item.id }}">Школа {{ item.name }}</option>
-          {% endfor %}
-        </select>
+        <label>Дата возврата:</label>
+        <input type="datetime-local" name="return_date" required>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label for="student-select"><i class="fas fa-user-graduate"></i> Ученик</label>
-        <select id="student-select" name="student_id" required>
-          <option value="">— Выберите ученика —</option>
-          {% for item in student %}
-            <option value="{{ item.id }}">{{ item.full_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
+    <button type="submit" class="submit-btn">Выдать книгу</button>
+  </form>
+  {% endif %}
 
-      <div class="form-group">
-        <label for="quantity"><i class="fas fa-hashtag"></i> Количество</label>
-        <input type="number" id="quantity" name="quantity" min="1" value="1" required>
-      </div>
-
-      <div class="date-group">
-        <div class="form-group">
-          <label for="issue-date"><i class="fas fa-calendar-day"></i> Дата выдачи</label>
-          <input type="datetime-local" id="issue-date" name="issue_date" required>
-        </div>
-        <div class="form-group">
-          <label for="return-date"><i class="fas fa-calendar-check"></i> Дата возврата</label>
-          <input type="datetime-local" id="return-date" name="return_date" required>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-btn">
-        <i class="fas fa-paper-plane"></i> Выдать книгу
-      </button>
-    </form>
-  </section>
-
+  <!-- Секция с доступными книгами -->
   <section class="inventory-section">
-    <h2><i class="fas fa-box-open"></i> Доступные книги</h2>
-    <p>Учебники в наличии для выдачи</p>
-
+    <h2>Доступные книги</h2>
     {% if books1 %}
       {% for item in books1 %}
-        <div class="book-item">
-          <div class="book-info">
-            <h3>{{ item.book.title }}</h3>
-            <p>Предмет: {{ item.book.subject }} • Класс: {{ item.book.grade }}</p>
-          </div>
-          <div class="book-quantity">
-            {{ item.quantity }} шт.
-          </div>
+      <div class="book-item">
+        <div class="book-info">
+          <h3>{{ item.book.title }}</h3>
+          <p>Предмет: {{ item.book.subject }} • Класс: {{ item.book.grade }}</p>
         </div>
+        <div class="book-quantity">{{ item.quantity }} шт.</div>
+      </div>
       {% endfor %}
     {% else %}
       <p style="color: #7f8c8d; font-style: italic;">Нет доступных учебников для выдачи.</p>

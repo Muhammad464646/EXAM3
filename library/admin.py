@@ -1,11 +1,11 @@
 from django.contrib import admin
 from .models import *
-# Register your models here.
+#
 
-admin.site.register(School)
-admin.site.register(Book)
-admin.site.register(Student)
-admin.site.register(BookStock)
-admin.site.register(SchoolBook)
-admin.site.register(BookIssue)
-admin.site.register(UserRole)
+
+admin.site.register(School, SchoolWithBooksAdmin)
+admin.site.register(Book, BookAdmin)
+admin.site.register(BookStock, BookStockAdmin)
+admin.site.register(Student, StudentAdmin)
+admin.site.register(BookIssue, BookIssueAdmin)
+admin.site.register(UserRole, UserRoleAdmin)
